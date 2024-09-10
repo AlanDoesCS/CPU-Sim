@@ -4,7 +4,7 @@ A Simplified Visualisation of a 16 bit CPU core with a custom instruction set
 # Instruction Set
 1)  `NOP` No operation
 2)  `LDA <Address>` Load address into accumulator
-4)  `LDI <Value>` Load immediate into accumulator
+4)  `LDI <Unsigned Byte>` Load immediate into accumulator
 5)  `STA <Address>` Store accumulator into address
 6)  `ADD <Address>` Add accumulator
 7)  `SUB <Address>` Subtract accumulator
