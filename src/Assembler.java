@@ -95,4 +95,9 @@ public class Assembler {
         System.out.println("[Assembler] Compilation successful.");
         return instructions;
     }
+
+    public static String decodeInstruction(UInt8 opcode, UInt8 operand) {
+        String[] mnemonics = {"NOP", "LDA", "LDI", "STA", "ADD", "SUB", "MUL", "DIV", "JMP", "JGZ", "JLZ", "JEZ", "JNZ", "INP", "OUT", "HLT"};
+        return String.format("%s %d", mnemonics[opcode.getValue()], operand.getValue());
+    }
 }

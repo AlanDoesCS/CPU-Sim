@@ -5,24 +5,16 @@ import java.util.Map;
 import java.util.Scanner;
 
 public class CPU {
+    double clockSpeed; // Hz
+    long instructionDelay; // ms
+
+    Visualiser visualiser;
     Memory RAM;
 
     ALU alu = new ALU();
     ControlUnit controlUnit = new ControlUnit();
 
-    Register MAR = new Register(new UInt16(0));
-    Register MDR = new Register(new UInt16(0));
-    Register PC = new Register(new UInt16(0));
-    Register Acc = new Register(new UInt16(0));
-    Register IR = new Register(new UInt16(0));
-
-    boolean halted = false;
-
-    public CPU(Memory memory) {
-        this.RAM = memory;
-    }
-
-    private static class Register {
+    static class Register {
         private UInt16 value;
         public Register(UInt16 value) {
             this.value = value;
@@ -37,6 +29,25 @@ public class CPU {
         public int getAsInt() {
             return value.getValue();
         }
+    }
+
+    Register MAR = new Register(new UInt16(0));
+    Register MDR = new Register(new UInt16(0));
+    Register PC = new Register(new UInt16(0));
+    Register Acc = new Register(new UInt16(0));
+    Register IR = new Register(new UInt16(0));
+
+    boolean halted = false;
+
+    public CPU(Memory memory, Visualiser visualiser, double clockSpeed) {
+        this.clockSpeed = clockSpeed;
+        this.instructionDelay = (long) Math.max(1000 / clockSpeed, 10);
+        this.RAM = memory;
+        this.visualiser = visualiser;
+    }
+
+    public Map<String, Register> getRegisters() {
+        return registers;
     }
 
     Map<String, Register> registers = Map.of(
@@ -75,6 +86,9 @@ public class CPU {
             // decode
             UInt8 opcode = new UInt8((IR.getAsInt() >> 8) & 0xFF);
             UInt8 operand = new UInt8(IR.getAsInt() & 0xFF);
+
+            String instruction = Assembler.decodeInstruction(opcode, operand);
+            visualiser.updateInstruction(instruction);
 
             // execute
             switch (opcode.getValue()) {
@@ -135,6 +149,7 @@ public class CPU {
                     break;
                 case 14: // OUT
                     System.out.println("[Simulation] Output:\t" + Acc.get());
+                    visualiser.updateOutput(Acc.get().toString());
                     break;
                 case 15: // HLT
                     halted = true;
@@ -142,6 +157,9 @@ public class CPU {
                 default:
                     throw new IllegalStateException("Unknown opcode: " + opcode);
             }
+
+            visualiser.updateMemory(RAM);
+            visualiser.updateRegisters(registers);
         }
     }
 
@@ -166,14 +184,13 @@ public class CPU {
     public void run() {
         while (!halted) {
             controlUnit.fetchDecodeExecute();
-            dumpRegisters();
             try {
-                Thread.sleep(200);
+                Thread.sleep(instructionDelay);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        System.out.println("CPU halted.");
+        System.out.println("[CPU]\tCPU halted.");
     }
 
     public void dumpRegisters() {
